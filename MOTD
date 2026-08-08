@@ -1,0 +1,98 @@
+#!/bin/bash
+# ==========================================
+# Blood Cloud™ Premium MOTD Installer (v3 PRO)
+# FULL CLEAN + ONLY CUSTOM MOTD
+# ==========================================
+set -e
+
+echo "🔧 Installing Blood Cloud™ Premium MOTD..."
+
+# 1. Remove Old Default MOTD
+echo "🧹 Removing old MOTD completely..."
+chmod -x /etc/update-motd.d/* 2>/dev/null || true
+rm -f /etc/motd /var/run/motd /run/motd.dynamic
+
+if [ -f /etc/default/motd-news ]; then
+    sed -i 's/ENABLED=1/ENABLED=0/g' /etc/default/motd-news
+fi
+
+# 2. Configure PAM
+echo "⚙ Configuring PAM..."
+cp /etc/pam.d/sshd /etc/pam.d/sshd.bak 2>/dev/null || true
+cp /etc/pam.d/login /etc/pam.d/login.bak 2>/dev/null || true
+
+sed -i '/pam_motd.so/d' /etc/pam.d/sshd
+sed -i '/pam_motd.so/d' /etc/pam.d/login
+
+echo "session optional pam_exec.so stdout /etc/update-motd.d/00-bloodcloud" >> /etc/pam.d/sshd
+echo "session optional pam_exec.so stdout /etc/update-motd.d/00-bloodcloud" >> /etc/pam.d/login
+
+# 3. Create Custom MOTD Script
+echo "✨ Creating Blood Cloud™ MOTD..."
+cat << 'MOTDEOF' > /etc/update-motd.d/00-bloodcloud
+#!/bin/bash
+
+# Colors
+RED="\e[38;5;196m"
+CRIMSON="\e[38;5;160m"
+GOLD="\e[38;5;220m"
+WHITE="\e[38;5;255m"
+GRAY="\e[38;5;242m"
+RESET="\e[0m"
+
+# System Info
+HOSTNAME=$(hostname)
+OS=$(grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
+KERNEL=$(uname -r)
+UPTIME=$(uptime -p | sed 's/up //')
+CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8"%"}')
+MEM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
+MEM_USED=$(free -m | awk '/Mem:/ {print $3}')
+MEM_PERC=$((MEM_USED * 100 / MEM_TOTAL))
+DISK=$(df -h / | awk 'NR==2 {print $3 " / " $2 " (" $5 ")"}')
+IP=$(hostname -I | awk '{print $1}')
+USERS=$(who | wc -l)
+PROCS=$(ps -e --no-headers | wc -l)
+
+echo ""
+echo -e "${RED}"
+cat << "LOGO"
+██████╗ ██╗      ██████╗  ██████╗ ██████╗      ██████╗██╗      ██████╗ ██╗   ██╗██████╗ 
+██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔══██╗    ██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗
+██████╔╝██║     ██║   ██║██║   ██║██║  ██║    ██║     ██║     ██║   ██║██║   ██║██║  ██║
+██╔══██╗██║     ██║   ██║██║   ██║██║  ██║    ██║     ██║     ██║   ██║██║   ██║██║  ██║
+██████╔╝███████╗╚██████╔╝╚██████╔╝██████╔╝    ╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝
+╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝      ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ 
+LOGO
+echo -e "${RESET}"
+
+echo -e "${CRIMSON}🩸 Welcome to Blood Cloud™ Datacenter${RESET}"
+echo -e "${WHITE}Ultra High Performance • Advanced Security • Enterprise Node${RESET}"
+echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+printf "${CRIMSON}%-18s${RESET} %s\n" "Hostname:" "$HOSTNAME"
+printf "${CRIMSON}%-18s${RESET} %s\n" "OS:" "$OS"
+printf "${CRIMSON}%-18s${RESET} %s\n" "Kernel:" "$KERNEL"
+printf "${CRIMSON}%-18s${RESET} %s\n" "Uptime:" "$UPTIME"
+printf "${CRIMSON}%-18s${RESET} %s\n" "CPU Usage:" "$CPU"
+printf "${CRIMSON}%-18s${RESET} %sMB / %sMB (${GOLD}%s%%${RESET})\n" "Memory:" "$MEM_USED" "$MEM_TOTAL" "$MEM_PERC"
+printf "${CRIMSON}%-18s${RESET} %s\n" "Disk:" "$DISK"
+printf "${CRIMSON}%-18s${RESET} %s\n" "Processes:" "$PROCS"
+printf "${CRIMSON}%-18s${RESET} %s\n" "Users Active:" "$USERS"
+printf "${CRIMSON}%-18s${RESET} %s\n" "IP Address:" "$IP"
+echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+echo -e "${RED}Support:${RESET} support@bloodcloud.net"
+echo -e "${RED}Community:${RESET} https://discord.gg/bloodcloud"
+echo -e "${GOLD}Blood Cloud™ — Next Generation Enterprise Hosting 👑${RESET}"
+echo ""
+MOTDEOF
+
+chmod +x /etc/update-motd.d/00-bloodcloud
+
+# 4. Restart Services
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
+
+echo ""
+echo "✅ Blood Cloud™ MOTD Installed Successfully!"
+echo "➡ Reconnect your SSH session to see changes!"
