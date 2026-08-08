@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # =================================================================
-#  Blood Cloud™ - Discord Bot Auto Installer (v8 PRO FIXED)
-#  High Performance • Auto Setup • Systemd Integrated
+#  Blood Cloud™ - Discord Bot Auto Installer (PRO FIXED)
 # =================================================================
 
 RED='\033[0;31m'
@@ -19,12 +18,12 @@ NC='\033[0m'
 clear
 echo -e "${RED}"
 cat << "LOGO"
-██████╗ ██╗      ██████╗  ██████╗ ██████╗      ██████╗ ██╗      ██████╗ ██╗   ██╗██████╗ 
-██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔══██╗    ██╔════╝ ██║     ██╔═══██╗██║   ██║██╔══██╗
-██████╔╝██║     ██║   ██║██║   ██║██║  ██║    ██║     ██║     ██║   ██║██║   ██║██║  ██║
-██╔══██╗██║     ██║   ██║██║   ██║██║  ██║    ██║     ██║     ██║   ██║██║   ██║██║  ██║
-██████╔╝███████╗╚██████╔╝╚██████╔╝██████╔╝    ╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝
-╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝      ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ 
+██████╗ ██╗      ██████╗  ██████╗ ██████╗     ██████╗ ██╗      ██████╗ ██╗   ██╗██████╗ 
+██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔══██╗   ██╔════╝ ██║     ██╔═══██╗██║   ██║██╔══██╗
+██████╔╝██║     ██║   ██║██║   ██║██║  ██║   ██║      ██║     ██║   ██║██║   ██║██║  ██║
+██╔══██╗██║     ██║   ██║██║   ██║██║  ██║   ██║      ██║     ██║   ██║██║   ██║██║  ██║
+██████╔╝███████╗╚██████╔╝╚██████╔╝██████╔╝   ╚██████╗ ███████╗╚██████╔╝╚██████╔╝██████╔╝
+╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝     ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ 
 LOGO
 echo -e "${NC}"
 echo -e "${RED}🩸 Welcome to Blood Cloud™ Auto Installation System${NC}"
@@ -36,9 +35,10 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# 1. Directory Setup Prompt
+# 1. Directory Setup Prompt (Terminal Freeze Fix)
 echo -e "\n${YELLOW}--- Step 1: Directory Setup ---${NC}"
-read -p "Enter folder name for installation [Default: bot]: " DIR_NAME </dev/tty
+echo -n -e "Enter folder name for installation [Default: bot]: "
+read DIR_NAME < /dev/tty
 DIR_NAME=${DIR_NAME:-bot}
 
 INSTALL_DIR="/root/${DIR_NAME}"
@@ -52,7 +52,7 @@ echo -e "\n${YELLOW}--- Step 2: Installing Dependencies ---${NC}"
 apt update -y
 apt install -y python3 python3-pip python3-venv build-essential git curl pango1.0-tools
 
-# LXD Setup via Snap
+# LXD Engine Setup via Snap
 if ! command -v lxd &> /dev/null; then
     echo -e "${CYAN}Setting up LXD container engine...${NC}"
     apt install -y snapd 2>/dev/null || true
@@ -85,14 +85,16 @@ if [ -f "$INSTALL_DIR/example.env" ]; then
         if [ -z "$DEFAULT_VAL" ]; then
             USER_INPUT=""
             while [ -z "$USER_INPUT" ]; do
-                read -p "Enter $VAR_NAME (Required): " USER_INPUT </dev/tty
+                echo -n -e "Enter $VAR_NAME (Required): "
+                read USER_INPUT < /dev/tty
                 if [ -z "$USER_INPUT" ]; then
                     echo -e "${RED}This field cannot be empty!${NC}"
                 fi
             done
             FINAL_VAL="$USER_INPUT"
         else
-            read -p "Enter $VAR_NAME [Default: $DEFAULT_VAL]: " USER_INPUT </dev/tty
+            echo -n -e "Enter $VAR_NAME [Default: $DEFAULT_VAL]: "
+            read USER_INPUT < /dev/tty
             FINAL_VAL=${USER_INPUT:-$DEFAULT_VAL}
         fi
         
@@ -106,12 +108,11 @@ fi
 # 5. Virtual Environment & Dual Installation Fix
 echo -e "\n${YELLOW}--- Step 5: Preparing Python Environment ---${NC}"
 
-# Create VENV
 python3 -m venv "$INSTALL_DIR/venv"
 "$INSTALL_DIR/venv/bin/pip" install --upgrade pip --quiet
 "$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
 
-# Dual-install on System Python (Fixes No Module Found error in Systemd)
+# System Python Fallback (Prevents ModuleNotFoundError in Systemd)
 pip3 install -r "$INSTALL_DIR/requirements.txt" --break-system-packages 2>/dev/null || pip3 install -r "$INSTALL_DIR/requirements.txt" 2>/dev/null || true
 
 # 6. Systemd Background Service Configuration
@@ -138,7 +139,7 @@ systemctl daemon-reload
 systemctl enable bot.service
 systemctl restart bot.service
 
-# Completion Summary Output
+# Completion Output
 clear
 echo -e "${RED}========================================================================${NC}"
 echo -e "${WHITE}${BOLD} 🎉 CONGRATULATIONS! YOUR DISCORD BOT IS INSTALLED & RUNNING! 🚀${NC}"
