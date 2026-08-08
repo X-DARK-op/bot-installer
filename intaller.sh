@@ -22,8 +22,8 @@ fi
 
 # 1. Directory Setup Prompt
 echo -e "\n${YELLOW}--- Installation Directory Setup ---${NC}"
-read -p "Enter folder name to install into [Default: vps]: " DIR_NAME </dev/tty
-DIR_NAME=${DIR_NAME:-vps}
+read -p "Enter folder name to install into [Default: bot]: " DIR_NAME </dev/tty
+DIR_NAME=${DIR_NAME:-bot}
 
 INSTALL_DIR="/root/${DIR_NAME}"
 mkdir -p "$INSTALL_DIR"
@@ -31,7 +31,12 @@ cd "$INSTALL_DIR" || exit 1
 
 echo -e "${GREEN}Installing files into: ${INSTALL_DIR}${NC}"
 
-# 2. Downloading Files
+# 2. System Packages Install
+echo -e "\n${YELLOW}Updating system & installing dependencies...${NC}"
+apt update -y
+apt install -y python3 python3-pip python3-venv build-essential pango1.0-tools lxd lxd-client git
+
+# 3. Downloading Files
 echo -e "\n${YELLOW}Downloading files from Catbox...${NC}"
 curl -sSL "https://files.catbox.moe/e7m1ou.py" -o "$INSTALL_DIR/bot.py"
 curl -sSL "https://files.catbox.moe/wjzlfv.txt" -o "$INSTALL_DIR/requirements.txt"
@@ -39,7 +44,7 @@ curl -sSL "https://files.catbox.moe/dbvwq3.env" -o "$INSTALL_DIR/example.env"
 
 echo -e "${GREEN}Files downloaded successfully!${NC}"
 
-# 3. Interactive .env Generator
+# 4. Interactive .env Generator
 echo -e "\n${YELLOW}--- Bot Setup Configurations ---${NC}"
 
 if [ -f "$INSTALL_DIR/example.env" ]; then
@@ -77,20 +82,19 @@ else
     exit 1
 fi
 
-# 4. System Dependencies
-echo -e "\n${YELLOW}Updating system packages and installing dependencies...${NC}"
-apt update && apt upgrade -y
-apt install -y python3 python3-pip python3-venv build-essential pango1.0-tools lxd lxd-client
-
 # LXD Setup
 echo -e "\n${YELLOW}Initializing LXD container engine...${NC}"
-lxd init --auto
+lxd init --auto 2>/dev/null || true
 
-# Python Requirements
-echo -e "\n${YELLOW}Installing Python packages...${NC}"
-pip3 install --break-system-packages davey -r "$INSTALL_DIR/requirements.txt" || pip3 install davey -r "$INSTALL_DIR/requirements.txt"
+# 5. Virtual Environment & Python Setup
+echo -e "\n${YELLOW}Creating Python Virtual Environment...${NC}"
+python3 -m venv "$INSTALL_DIR/venv"
 
-# 5. Systemd Service Setup
+echo -e "${YELLOW}Installing Python requirements...${NC}"
+"$INSTALL_DIR/venv/bin/pip" install --upgrade pip
+"$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
+
+# 6. Systemd Service Setup
 echo -e "\n${YELLOW}Creating Systemd Service...${NC}"
 cat <<SERVICEFILE > /etc/systemd/system/bot.service
 [Unit]
@@ -101,7 +105,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/python3 $INSTALL_DIR/bot.py
+ExecStart=$INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/bot.py
 Restart=always
 RestartSec=10
 
@@ -114,27 +118,28 @@ systemctl daemon-reload
 systemctl enable bot.service
 systemctl restart bot.service
 
-# Clear Screen & Show Dashboard
+# Clear Screen & Show Final Screen
 clear
 
-echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${WHITE} ${BOLD}               ✨ SETUP COMPLETED SUCCESSFULLY ✨                       ${CYAN}║${NC}"
-echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${NC}                                                                          ${CYAN}║${NC}"
-echo -e "${CYAN}║${GREEN}  🚀 Files installed to: ${WHITE}${INSTALL_DIR}                                 ${CYAN}║${NC}"
-echo -e "${CYAN}║${GREEN}  📂 Go to directory:   ${YELLOW}cd ${INSTALL_DIR}                                      ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}                                                                          ${CYAN}║${NC}"
-echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${PURPLE} ${BOLD}           📌 QUICK SYSTEMCTL COMMANDS CHEATSHEET 📌                    ${CYAN}║${NC}"
-echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${NC}                                                                          ${CYAN}║${NC}"
-echo -e "${CYAN}║${YELLOW}  ▶ Start Bot:${NC}       systemctl start bot                                 ${CYAN}║${NC}"
-echo -e "${CYAN}║${RED}  ▶ Stop Bot:${NC}        systemctl stop bot                                  ${CYAN}║${NC}"
-echo -e "${CYAN}║${BLUE}  ▶ Restart Bot:${NC}     systemctl restart bot                               ${CYAN}║${NC}"
-echo -e "${CYAN}║${GREEN}  ▶ Check Status:${NC}    systemctl status bot                                ${CYAN}║${NC}"
-echo -e "${CYAN}║${CYAN}  ▶ View Live Logs:${NC}  journalctl -u bot -f -n 50                          ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}                                                                          ${CYAN}║${NC}"
-echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${WHITE}  📁 Files Path: ${GREEN}${INSTALL_DIR}/.env${WHITE} | ${GREEN}${INSTALL_DIR}/bot.py                     ${CYAN}║${NC}"
-echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${WHITE}${BOLD} 🎉 CONGRATULATIONS! YOUR DISCORD BOT IS READY & RUNNING! 🚀${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${CYAN} All dependencies and environment setup completed successfully.${NC}"
+echo -e "${CYAN} Your service has been configured and started automatically.${NC}"
+echo -e ""
+echo -e "${YELLOW} 📁 Directory Path:${NC} ${WHITE}${INSTALL_DIR}${NC}"
+echo -e "${YELLOW} 📄 Config File:${NC}    ${WHITE}${INSTALL_DIR}/.env${NC}"
+echo -e "${YELLOW} 🐍 Executable:${NC}     ${WHITE}${INSTALL_DIR}/bot.py${NC}"
+echo -e ""
+echo -e "${PURPLE}------------------------------------------------------------------------${NC}"
+echo -e "${WHITE}${BOLD} 📌 Useful Service Commands Cheat-Sheet:${NC}"
+echo -e "${PURPLE}------------------------------------------------------------------------${NC}"
+echo -e " ${GREEN}▶ Check Status:${NC}   systemctl status bot"
+echo -e " ${CYAN}▶ View Live Logs:${NC} journalctl -u bot -f -n 50"
+echo -e " ${BLUE}▶ Restart Bot:${NC}    systemctl restart bot"
+echo -e " ${YELLOW}▶ Start Bot:${NC}      systemctl start bot"
+echo -e " ${RED}▶ Stop Bot:${NC}       systemctl stop bot"
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${WHITE}${BOLD}   Thank you for using Might Cloud Automation Tools! 💎${NC}"
+echo -e "${GREEN}========================================================================${NC}"
 echo -e ""
