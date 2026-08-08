@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =================================================================
-#  Blood Cloud™ - Discord Bot Auto Installer (ENTERPRISE EDITION)
+#  Blood Cloud™ - Discord Bot Auto Installer (LXC PATH FIXED)
 # =================================================================
 
 # Color Palette Definition
@@ -50,17 +50,20 @@ cd "$INSTALL_DIR" || exit 1
 echo -e "${GREEN}📂 Installation Path Set To: ${WHITE}${INSTALL_DIR}${NC}"
 
 # 2. System Dependencies Installation
-echo -e "\n${YELLOW}--- Step 2: Installing Dependencies ---${NC}"
+echo -e "\n${YELLOW}--- Step 2: Installing Dependencies & LXC Engine ---${NC}"
 apt update -y
-apt install -y python3 python3-pip python3-venv build-essential git curl pango1.0-tools
+apt install -y python3 python3-pip python3-venv build-essential git curl pango1.0-tools lxc lxd-installer lxd-client snapd
 
-# LXD Engine Setup via Snap
-if ! command -v lxd &> /dev/null; then
-    echo -e "${CYAN}Setting up LXD container engine...${NC}"
-    apt install -y snapd 2>/dev/null || true
+# LXD Engine & LXC Binary Path Setup
+if ! command -v lxc &> /dev/null; then
+    echo -e "${CYAN}Setting up LXD container engine & LXC binaries...${NC}"
     snap install lxd --channel=latest/stable 2>/dev/null || true
+    ln -s /snap/bin/lxc /usr/bin/lxc 2>/dev/null || true
     lxd init --auto 2>/dev/null || true
 fi
+
+# Symlink check to ensure 'lxc' command works globally for Python sub-processes
+ln -s /snap/bin/lxc /usr/bin/lxc 2>/dev/null || true
 
 # 3. Downloading Source Files
 echo -e "\n${YELLOW}--- Step 3: Fetching Bot Source Files ---${NC}"
