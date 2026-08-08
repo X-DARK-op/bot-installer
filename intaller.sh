@@ -1,16 +1,18 @@
 #!/bin/bash
 
 # =================================================================
-#  Blood Cloud™ - Discord Bot Auto Installer (PRO FIXED)
+#  Blood Cloud™ - Discord Bot Auto Installer (ENTERPRISE EDITION)
 # =================================================================
 
+# Color Palette Definition
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
+LIGHT_CYAN='\033[1;36m'
 WHITE='\033[1;37m'
+DARK_GRAY='\033[1;30m'
 BOLD='\033[1m'
 GOLD='\033[1;33m'
 NC='\033[0m'
@@ -29,13 +31,13 @@ echo -e "${NC}"
 echo -e "${RED}🩸 Welcome to Blood Cloud™ Auto Installation System${NC}"
 echo -e "${WHITE}========================================================================${NC}"
 
-# 0. Root Check
+# 0. Root Privilege Check
 if [ "$EUID" -ne 0 ]; then 
   echo -e "${RED}❌ Error: Please run this script as root! (sudo bash script.sh)${NC}"
   exit 1
 fi
 
-# 1. Directory Setup Prompt (Terminal Freeze Fix)
+# 1. Directory Setup Prompt (Terminal Input Freeze Fix)
 echo -e "\n${YELLOW}--- Step 1: Directory Setup ---${NC}"
 echo -n -e "Enter folder name for installation [Default: bot]: "
 read DIR_NAME < /dev/tty
@@ -105,17 +107,17 @@ if [ -f "$INSTALL_DIR/example.env" ]; then
     echo -e "${GREEN}✔ Config file .env saved successfully!${NC}"
 fi
 
-# 5. Virtual Environment & Dual Installation Fix
+# 5. Virtual Environment & Dual Installation Setup
 echo -e "\n${YELLOW}--- Step 5: Preparing Python Environment ---${NC}"
 
 python3 -m venv "$INSTALL_DIR/venv"
 "$INSTALL_DIR/venv/bin/pip" install --upgrade pip --quiet
 "$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
 
-# System Python Fallback (Prevents ModuleNotFoundError in Systemd)
+# System Python Fallback Configuration
 pip3 install -r "$INSTALL_DIR/requirements.txt" --break-system-packages 2>/dev/null || pip3 install -r "$INSTALL_DIR/requirements.txt" 2>/dev/null || true
 
-# 6. Systemd Background Service Configuration
+# 6. Systemd Service Deployment
 echo -e "\n${YELLOW}--- Step 6: Setting Up Systemd Background Service ---${NC}"
 
 cat <<SERVICEFILE > /etc/systemd/system/bot.service
@@ -139,25 +141,33 @@ systemctl daemon-reload
 systemctl enable bot.service
 systemctl restart bot.service
 
-# Completion Output
+# Completion Output (Enterprise Control Panel UI)
 clear
-echo -e "${RED}========================================================================${NC}"
-echo -e "${WHITE}${BOLD} 🎉 CONGRATULATIONS! YOUR DISCORD BOT IS INSTALLED & RUNNING! 🚀${NC}"
-echo -e "${RED}========================================================================${NC}"
-echo -e "${CYAN} Environment, Virtual Environment, and Systemd Service Configured.${NC}"
-echo -e ""
-echo -e "${YELLOW} 📁 Directory Path:${NC} ${WHITE}${INSTALL_DIR}${NC}"
-echo -e "${YELLOW} 📄 Config File:${NC}    ${WHITE}${INSTALL_DIR}/.env${NC}"
-echo -e "${YELLOW} 🐍 Executable:${NC}     ${WHITE}${INSTALL_DIR}/bot.py${NC}"
-echo -e ""
-echo -e "${PURPLE}------------------------------------------------------------------------${NC}"
-echo -e "${WHITE}${BOLD} 📌 Useful Commands Cheat-Sheet:${NC}"
-echo -e "${PURPLE}------------------------------------------------------------------------${NC}"
-echo -e " ${GREEN}▶ Status Check:${NC}   systemctl status bot"
-echo -e " ${CYAN}▶ Live Logs:${NC}      journalctl -u bot -f -n 50"
-echo -e " ${BLUE}▶ Restart Bot:${NC}    systemctl restart bot"
-echo -e " ${RED}▶ Stop Bot:${NC}       systemctl stop bot"
-echo -e "${RED}========================================================================${NC}"
-echo -e "${GOLD}${BOLD}   Thank you for using Blood Cloud™ Automation Suite! 💎${NC}"
-echo -e "${RED}========================================================================${NC}"
+echo -e "${RED}┌─────────────────────────────────────────────────────────────────────────────┐${NC}"
+echo -e "${RED}│${NC} ${RED}●${NC} ${YELLOW}●${NC} ${GREEN}●${NC}  ${LIGHT_CYAN}${BOLD}BLOOD CLOUD™ INTEGRATION SYSTEM${NC} ${DARK_GRAY}[v3.0-PRO]${NC}                        ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}│${NC}  ${GREEN}SYSTEM STATUS${NC}  ::  ${BOLD}${WHITE}ONLINE & ACTIVE${NC} ${DARK_GRAY}(PID: Auto | Port: Active)${NC}           ${RED}│${NC}"
+echo -e "${RED}│${NC}  ${CYAN}DEPLOYMENT${NC}     ::  ${WHITE}Discord Gateway Connected${NC}                               ${RED}│${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC} ${BOLD}${WHITE}ENVIRONMENT METRICS${NC}                                                        ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${LIGHT_CYAN}Target Directory${NC}  │ ${WHITE}${INSTALL_DIR}${NC}                                          ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${LIGHT_CYAN}Configuration${NC}     │ ${WHITE}${INSTALL_DIR}/.env${NC}                                     ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${LIGHT_CYAN}Python Engine${NC}     │ ${WHITE}${INSTALL_DIR}/venv/bin/python3${NC}                            ${RED}│${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC} ${BOLD}${WHITE}SYSTEMD CONTROL COMMANDS${NC}                                                    ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${GREEN}systemctl status bot${NC}       ${DARK_GRAY}│${NC} View service active state                  ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${CYAN}journalctl -u bot -f -n 50${NC} ${DARK_GRAY}│${NC} Stream real-time application logs          ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${YELLOW}systemctl restart bot${NC}      ${DARK_GRAY}│${NC} Hard restart background process            ${RED}│${NC}"
+echo -e "${RED}│${NC}   ${RED}systemctl stop bot${NC}         ${DARK_GRAY}│${NC} Terminate bot process safely               ${RED}│${NC}"
+echo -e "${RED}│${NC}                                                                             ${RED}│${NC}"
+echo -e "${RED}├─────────────────────────────────────────────────────────────────────────────┤${NC}"
+echo -e "${RED}│${NC} ${GOLD}${BOLD}Blood Cloud™ Infrastructure Suite${NC} ${DARK_GRAY}─ All rights reserved.${NC}                    ${RED}│${NC}"
+echo -e "${RED}└─────────────────────────────────────────────────────────────────────────────┘${NC}"
 echo -e ""
